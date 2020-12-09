@@ -40,8 +40,8 @@ const appInfo = {
 }
 
 const translations = translationsJson
-export default define({
+export default {
   appInfo,
   routes,
   translations
-})
+}

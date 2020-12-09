@@ -220,11 +220,11 @@ const routes = [
 const translations = translationsJson
 const quickActions = quickActionsImport
 
-export default define({
+export default {
   appInfo,
   store,
   routes,
   navItems,
   quickActions,
   translations
-})
+}

@@ -5,94 +5,78 @@ import commonjs from '@rollup/plugin-commonjs'
 import babel from 'rollup-plugin-babel'
 import builtins from '@erquhart/rollup-plugin-node-builtins'
 import globals from 'rollup-plugin-node-globals'
-import replace from '@rollup/plugin-replace'
 import copy from 'rollup-plugin-copy'
 import postcss from 'rollup-plugin-postcss'
+import modify from 'rollup-plugin-modify'
+import { terser } from 'rollup-plugin-terser'
+import filesize from 'rollup-plugin-filesize'
+import serve from 'rollup-plugin-serve'
+
 const production = !process.env.ROLLUP_WATCH
-/*import serve from 'rollup-plugin-serve'*/
 
-const gen = c => {
-  return {
-    input: c.input,
-    output: {
-      dir: c.output,
-      name: 'main',
-      entryFileNames: 'index.js',
-      format: 'iife',
-      sourcemap: !production,
-      strict : false
-    },
-    inlineDynamicImports: true,
-    onwarn: warning => {
-      if (warning.code !== 'CIRCULAR_DEPENDENCY') {
-        console.error(`(!) ${ warning.message }`)
+export default {
+  input: {
+    'phoenix-core': 'workspaces/core/src/phoenix.js',
+    'phoenix-app-draw-io': 'workspaces/app-draw-io/src/app.js',
+    'phoenix-app-files': 'workspaces/app-files/src/app.js',
+    'phoenix-app-markdown-editor': 'workspaces/app-markdown-editor/src/app.js',
+    'phoenix-app-media-viewer': 'workspaces/app-media-viewer/src/app.js',
+  },
+  output: {
+    dir: 'dist',
+    format: 'amd',
+    sourcemap: !production,
+    amd: {
+      autoId: true
+    }
+  },
+  onwarn: warning => {
+    if (warning.code !== 'CIRCULAR_DEPENDENCY') {
+      console.error(`(!) ${ warning.message }`)
+    }
+  },
+  plugins: [
+    vue({ css: true }),
+    postcss(),
+    resolve(
+      {
+        mainFields: ['browser', 'jsnext', 'module', 'main'],
+        include: 'node_modules/**',
+        preferBuiltins: true
       }
-    },
-    plugins: [
-      vue({ css: true }),
-      postcss(),
-      replace({
-        'process.env.NODE_ENV': JSON.stringify('production')
-      }),
-      resolve(
-        {
-          mainFields: ['browser', 'jsnext', 'module', 'main'],
-          include: 'node_modules/**',
-          preferBuiltins: true
-        }
-      ),
-      babel({
-        exclude: 'node_modules/**',
-        runtimeHelpers: true
-      }),
-      commonjs({
-        include: 'node_modules/**'
-      }),
-      builtins(),
-      globals(),
-      json(),
-      ...(c.plugins || []),
-    ]
-  }
+    ),
+    babel({
+      exclude: 'node_modules/**',
+      runtimeHelpers: true
+    }),
+    modify({
+      'process.env.NODE_ENV': JSON.stringify('production'),
+      /* fix for 'assignment to undeclared variable dav' in davclient.js/lib/client.js 6:0 */
+      /* remove after pending PR is merged */
+      "if (typeof dav === 'undefined') { dav = {}; }": 'var dav = dav || {}',
+    }),
+    commonjs({
+      include: 'node_modules/**'
+    }),
+    builtins(),
+    globals(),
+    json(),
+    copy({
+      targets: [
+        { src: 'www/index.html', dest: 'dist' },
+        { src: 'www/oidc-callback.html', dest: 'dist' },
+        { src: 'www/oidc-silent-redirect.html', dest: 'dist' },
+        { src: 'www/boot.js', dest: 'dist' },
+        { src: 'workspaces/core/manifest.json', dest: 'dist' },
+        { src: 'workspaces/core/themes', dest: 'dist' },
+        { src: 'workspaces/core/config.json.sample-oc10', dest: 'dist', rename: 'config.json' },
+        { src: 'node_modules/requirejs/require.js', dest: 'dist' },
+      ]
+    }),
+    !production && serve({
+      contentBase: ['dist'],
+    }),
+    production && terser(),
+    production && filesize(),
+  ],
 }
-
-export default [
-  {
-    input: 'workspaces/phoenix/src/phoenix.js',
-    output: 'dist/phoenix',
-    plugins: [
-      copy({
-        targets: [
-          { src: 'static/index.html', dest: 'dist' },
-          { src: 'static/themes', dest: 'dist' },
-          { src: 'static/config.json.sample-oc10', dest: 'dist', rename: 'config.json' },
-          { src: 'static/manifest.json', dest: 'dist' },
-          { src: 'static/oidc-callback.html', dest: 'dist' },
-          { src: 'static/oidc-silent-redirect.html', dest: 'dist' },
-          { src: 'node_modules/requirejs/require.js', dest: 'dist' },
-        ]
-      }),
-      /*serve({
-        contentBase: ['dist'],
-        host: '0.0.0.0',
-        port: 9100,
-      }),*/
-    ],
-  },
-  {
-    input: 'workspaces/draw-io/src/app.js',
-    output: 'dist/draw-io',
-  },
-  {
-    input: 'workspaces/files/src/default.js',
-    output: 'dist/files',
-  },
-  {
-    input: 'workspaces/markdown-editor/src/app.js',
-    output: 'dist/markdown-editor',
-  },
-  {
-    input: 'workspaces/media-viewer/src/app.js',
-    output: 'dist/media-viewer',
-  },
-].map(gen)

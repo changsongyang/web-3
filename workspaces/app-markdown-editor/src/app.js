@@ -59,9 +59,9 @@ const appInfo = {
 }
 
 const translations = t
-export default define({
+export default {
   appInfo,
   routes,
   store,
   translations
-})
+}

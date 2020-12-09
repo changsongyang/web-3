@@ -209,50 +209,50 @@ function loadTranslations () {
   })
 }
 
-(async function () {
-  config = await fetch('config.json')
+export default async () => {
+    config = await fetch('config.json')
 
-  if (config.status === 404) {
-    router.push('missing-config')
-    missingConfig()
-    return
-  }
-
-  try {
-    config = await config.json()
-
-    // if dynamic client registration is necessary - do this here now
-    if (config.openIdConnect && config.openIdConnect.dynamic) {
-      const clientData = await registerClient(config.openIdConnect)
-      config.openIdConnect.client_id = clientData.client_id
-      config.openIdConnect.client_secret = clientData.client_secret
+    if (config.status === 404) {
+      router.push('missing-config')
+      missingConfig()
+      return
     }
 
-    // Collect internal app paths
-    apps = config.apps.map((app) => {
-      return `./${app}/index.js`
-    })
+    try {
+      config = await config.json()
 
-    // Collect external app paths
-    if (config.external_apps) {
-      apps.push(...config.external_apps.map(app => app.path))
+      // if dynamic client registration is necessary - do this here now
+      if (config.openIdConnect && config.openIdConnect.dynamic) {
+        const clientData = await registerClient(config.openIdConnect)
+        config.openIdConnect.client_id = clientData.client_id
+        config.openIdConnect.client_secret = clientData.client_secret
+      }
+
+      // Collect internal app paths
+      apps = config.apps.map((app) => {
+        return `./phoenix-app-${app}`
+      })
+
+      // Collect external app paths
+      if (config.external_apps) {
+        apps.push(...config.external_apps.map(app => app.path))
+      }
+
+      // requirejs.config({waitSeconds:200}) is not really working ... reason unknown
+      // we are manipulating requirejs directly
+      requirejs.s.contexts._.config.waitSeconds = 200
+
+      // Boot apps
+      for(const path of apps) {
+        // please note that we have to go through apps one by one for now, to not break e.g. translations loading (race conditions)
+        try {
+          await loadApp(path)
+        } catch(err) {}
+      }
+
+      // Finalize loading core and apps
+      await finalizeInit()
+    } catch (err) {
+      console.log(err)
     }
-
-    // requirejs.config({waitSeconds:200}) is not really working ... reason unknown
-    // we are manipulating requirejs directly
-    requirejs.s.contexts._.config.waitSeconds = 200
-
-    // Boot apps
-    for(const path of apps) {
-      // please note that we have to go through apps one by one for now, to not break e.g. translations loading (race conditions)
-      try {
-        await loadApp(path)
-      } catch(err) {}
-    }
-
-    // Finalize loading core and apps
-    await finalizeInit()
-  } catch (err) {
-    console.log(err)
-  }
-})()
+}
