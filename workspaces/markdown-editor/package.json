@@ -1,0 +1,19 @@
+{
+  "name": "markdown-editor",
+  "version": "0.1.0",
+  "description": "ownCloud Phoenix MarkdownEditor Demo App",
+  "main": "js/demo.js",
+  "scripts": {
+    "watch": "webpack --progress --colors --watch --mode 'development'",
+    "build": "webpack -p"
+  },
+  "author": "serv3r.de DevTeam <ownCloud@serv3r.de>",
+  "license": "AGPL-3.0",
+  "devDependencies": {
+    "vue-template-compiler": "^2.6.10"
+  },
+  "dependencies": {
+    "marked": "^0.8.0",
+    "vuex": "^3.1.1"
+  }
+}

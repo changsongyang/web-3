@@ -1,0 +1,19 @@
+{
+  "name": "media-viewer",
+  "version": "1.0.0",
+  "description": "View images and videos in phoenix",
+  "main": "index.js",
+  "scripts": {
+    "lint": "eslint src/**/*.vue src/**/*.js --color --global requirejs --global require",
+    "lint-fix": "eslint src/**/*.vue src/**/*.js --color --global requirejs --global require --fix",
+    "watch": "webpack --progress --colors --watch --mode development --config webpack.dev.js",
+    "build": "webpack -p --config webpack.common.js"
+  },
+  "author": "Felix Heidecke",
+  "license": "AGPL-3.0",
+  "devDependencies": {
+    "query-string": "^6.8.3",
+    "vue-template-compiler": "^2.6.10",
+    "vuex": "3.1.3"
+  }
+}
