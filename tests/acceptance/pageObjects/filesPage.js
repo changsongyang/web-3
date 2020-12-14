@@ -329,9 +329,6 @@ module.exports = {
 
       return this
     },
-    closeTextEditor: function() {
-      return this.waitForElementVisible('@editorCloseBtn').click('@editorCloseBtn')
-    },
     isRootDirectory: async function() {
       return await this.assert.not.elementPresent('@breadcrumb')
     },
@@ -449,8 +446,5 @@ module.exports = {
     copySelectedBtn: {
       selector: '#copy-selected-btn'
     },
-    editorCloseBtn: {
-      selector: '#markdown-editor-app-bar .uk-text-right .oc-button'
-    }
   }
 }
